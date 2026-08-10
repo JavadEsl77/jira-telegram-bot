@@ -4,11 +4,36 @@ const ALGORITHM = "aes-256-gcm";
 const KEY_BYTES = 32;
 const IV_BYTES = 12;
 
+/**
+ * قرارداد رمزنگاری Token.
+ * این interface امکان جایگزینی پیاده‌سازی رمزنگاری را بدون تغییر Repository فراهم می‌کند.
+ */
 export interface TokenEncryptionService {
+    /**
+     * یک مقدار متنی را رمزنگاری می‌کند.
+     * @param value - متن خام برای رمزنگاری
+     * @returns رشته رمزنگاری‌شده در فرمت `ivHex:authTagHex:ciphertextHex`
+     */
     encrypt(value: string): string;
+
+    /**
+     * یک مقدار رمزنگاری‌شده را رمزگشایی می‌کند.
+     * @param value - رشته رمزنگاری‌شده در فرمت `ivHex:authTagHex:ciphertextHex`
+     * @returns متن اصلی
+     * @throws اگر فرمت نامعتبر باشد یا احراز هویت رمزنگاری شکست بخورد
+     */
     decrypt(value: string): string;
 }
 
+/**
+ * پیاده‌سازی رمزنگاری با الگوریتم AES-256-GCM.
+ * ویژگی‌ها:
+ * - IV تصادفی ۱۲ بایتی برای هر رمزنگاری
+ * - Authentication Tag برای تضمین یکپارچگی داده
+ * - کلید از متغیر محیطی JIRA_TOKEN_ENCRYPTION_KEY (64 کاراکتر hex = 32 بایت)
+ *
+ * اگر کلید در محیط موجود نباشد، سرویس هنگام ایجاد خطا می‌دهد (fail-fast).
+ */
 export class AesGcmEncryptionService implements TokenEncryptionService {
     private readonly key: Buffer;
 
@@ -41,6 +66,7 @@ export class AesGcmEncryptionService implements TokenEncryptionService {
 
         const authTag = cipher.getAuthTag();
 
+        // فرمت ذخیره‌سازی: iv:authTag:ciphertext (همه hex-encoded)
         return [iv.toString("hex"), authTag.toString("hex"), encrypted.toString("hex")].join(":");
     }
 

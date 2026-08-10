@@ -1,10 +1,21 @@
 import axios, { type AxiosInstance } from "axios";
 
+/** اطلاعات مورد نیاز برای ساخت یک JiraClient */
 export interface JiraClientCredentials {
+    /** آدرس پایه Jira (بدون /rest/api/...) */
     baseURL: string;
+    /** Personal Access Token برای احراز هویت Bearer */
     token: string;
 }
 
+/**
+ * کلاینت HTTP برای ارتباط با Jira REST API v2.
+ *
+ * احراز هویت: Bearer Token (مناسب برای Jira Server/Data Center PAT).
+ * هر instance به یک کاربر خاص تعلق دارد — از JiraClientFactory برای ساخت استفاده کنید.
+ *
+ * @see https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
+ */
 export class JiraClient {
     private readonly client: AxiosInstance;
 
@@ -21,11 +32,21 @@ export class JiraClient {
         });
     }
 
+    /**
+     * اطلاعات کاربر جاری را از Jira می‌گیرد.
+     * برای اعتبارسنجی Token هنگام اتصال اولیه استفاده می‌شود.
+     * @returns پروفایل کاربر (name, displayName, emailAddress, ...)
+     */
     async getCurrentUser() {
         const response = await this.client.get("/myself");
         return response.data;
     }
 
+    /**
+     * Issue‌ها را با یک JQL query جستجو می‌کند.
+     * @param jql - عبارت JQL (Jira Query Language)
+     * @param options - تنظیمات pagination
+     */
     async searchIssues(
         jql: string,
         options?: {
@@ -43,16 +64,29 @@ export class JiraClient {
         return response.data;
     }
 
+    /**
+     * جزئیات کامل یک Issue را برمی‌گرداند.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     */
     async getIssue(issueKey: string) {
         const response = await this.client.get(`/issue/${issueKey}`);
         return response.data;
     }
 
+    /**
+     * لیست transition‌های ممکن برای یک Issue را برمی‌گرداند.
+     * @param issueKey - کلید Issue
+     */
     async getTransitions(issueKey: string) {
         const response = await this.client.get(`/issue/${issueKey}/transitions`);
         return response.data;
     }
 
+    /**
+     * یک transition را روی Issue اعمال می‌کند (تغییر وضعیت).
+     * @param issueKey - کلید Issue
+     * @param transitionId - شناسه transition (از getTransitions)
+     */
     async transitionIssue(issueKey: string, transitionId: string) {
         await this.client.post(`/issue/${issueKey}/transitions`, {
             transition: { id: transitionId },

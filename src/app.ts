@@ -11,6 +11,20 @@ import { JiraClientFactory } from "./jira/jira.client.factory.js";
 import { DatabaseUserRepository } from "./user/user.repository.database.js";
 import { UserService } from "./user/user.service.js";
 
+/**
+ * اپلیکیشن را می‌سازد و تمام وابستگی‌ها را به هم وصل می‌کند.
+ *
+ * ترتیب وابستگی‌ها:
+ * 1. Prisma (SQLite از طریق libsql adapter)
+ * 2. AesGcmEncryptionService — برای رمزنگاری Token
+ * 3. DatabaseUserRepository — ذخیره‌سازی کاربران
+ * 4. UserService — منطق تجاری کاربران
+ * 5. JiraClientFactory — ساخت JiraClient به‌ازای هر کاربر
+ * 6. ConversationStateManager — وضعیت مکالمه Telegram
+ * 7. Bot — ثبت handler‌ها و آماده‌سازی برای polling
+ *
+ * اگر هر متغیر محیطی لازم وجود نداشته باشد، این تابع خطا می‌دهد (fail-fast).
+ */
 export function createApp() {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) throw new Error("DATABASE_URL is not configured");

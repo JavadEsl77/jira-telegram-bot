@@ -4,9 +4,18 @@ import type {
     JiraTransitionOption,
 } from "../jira.types.js";
 
+/**
+ * سرویس مدیریت transition‌های Jira (تغییر وضعیت Issue).
+ * به ازای هر request یک instance ساخته می‌شود.
+ */
 export class TransitionService {
     constructor(private readonly jira: JiraClient) { }
 
+    /**
+     * لیست transition‌های ممکن برای یک Issue را برمی‌گرداند.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     * @returns آرایه‌ای از گزینه‌های transition قابل نمایش در Telegram
+     */
     async getAvailable(
         issueKey: string,
     ): Promise<JiraTransitionOption[]> {
@@ -23,6 +32,11 @@ export class TransitionService {
         }));
     }
 
+    /**
+     * یک transition را با شناسه مستقیم اجرا می‌کند.
+     * @param issueKey - کلید Issue
+     * @param transitionId - شناسه transition (از getAvailable)
+     */
     async transition(
         issueKey: string,
         transitionId: string,
@@ -33,6 +47,12 @@ export class TransitionService {
         );
     }
 
+    /**
+     * Issue را به وضعیت مشخص‌شده انتقال می‌دهد (جستجو بر اساس نام وضعیت).
+     * @param issueKey - کلید Issue
+     * @param targetStatus - نام وضعیت مقصد (case-insensitive)
+     * @throws اگر transition به وضعیت مورد نظر وجود نداشته باشد
+     */
     async transitionTo(
         issueKey: string,
         targetStatus: string,

@@ -1,5 +1,9 @@
 import type { JiraIssue } from "../../jira/jira.types.js";
 
+/**
+ * تاریخ را به فرمت نسبی فارسی تبدیل می‌کند.
+ * مثال: "۵ دقیقه پیش"، "۲ ساعت پیش"، "۳ روز پیش"
+ */
 function formatRelativeDate(date?: string): string {
     if (!date) {
         return "نامشخص";
@@ -33,6 +37,7 @@ function formatRelativeDate(date?: string): string {
     return new Date(date).toLocaleDateString("fa-IR");
 }
 
+/** ایموجی متناسب با وضعیت Issue را برمی‌گرداند */
 function getStatusEmoji(status?: string): string {
     switch (status?.toLowerCase()) {
         case "done":
@@ -55,6 +60,7 @@ function getStatusEmoji(status?: string): string {
     }
 }
 
+/** ایموجی متناسب با اولویت Issue را برمی‌گرداند */
 function getPriorityEmoji(priority?: string): string {
     switch (priority?.toLowerCase()) {
         case "highest":
@@ -77,6 +83,11 @@ function getPriorityEmoji(priority?: string): string {
     }
 }
 
+/**
+ * یک Issue را به متن کامل برای نمایش در Telegram فرمت می‌کند.
+ * شامل: کلید، عنوان، وضعیت، اولویت، مسئول، برچسب‌ها و زمان به‌روزرسانی.
+ * @param issue - Issue دریافت‌شده از Jira
+ */
 export function formatIssue(issue: JiraIssue): string {
     const status = issue.fields.status?.name;
     const priority = issue.fields.priority?.name;
@@ -113,6 +124,11 @@ export function formatIssue(issue: JiraIssue): string {
     return lines.join("\n");
 }
 
+/**
+ * یک Issue را به کارت فشرده برای نمایش در لیست فرمت می‌کند.
+ * فشرده‌تر از formatIssue — مناسب برای نمایش چند Issue در یک پیام.
+ * @param issue - Issue دریافت‌شده از Jira
+ */
 export function formatIssueCard(
     issue: JiraIssue,
 ): string {
@@ -148,6 +164,12 @@ export function formatIssueCard(
     return lines.join("\n");
 }
 
+/**
+ * هدر صفحه‌بندی‌شده لیست Issue‌ها را فرمت می‌کند.
+ * @param issues - آرایه Issue‌های صفحه جاری
+ * @param page - شماره صفحه جاری
+ * @param totalPages - تعداد کل صفحات
+ */
 export function formatIssueList(
     issues: JiraIssue[],
     page: number,
