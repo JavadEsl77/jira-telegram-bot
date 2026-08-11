@@ -8,11 +8,20 @@ import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
 import { formatIssue } from "../formatters/issue.formatter.js";
 import { issueDetailKeyboard } from "../keyboards/issue-detail.keyboard.js";
 
+/**
+ * Handler‌های تغییر وضعیت Issue را ثبت می‌کند.
+ *
+ * جریان سه مرحله‌ای:
+ * 1. `transition:<key>` — لیست وضعیت‌های قابل انتخاب را نشان می‌دهد
+ * 2. `transition-execute:<key>:<id>` — تأییدیه از کاربر می‌گیرد
+ * 3. `transition-confirm:<key>:<id>` — transition را اجرا و Issue به‌روز‌شده را نمایش می‌دهد
+ */
 export function registerTransitionHandler(
     bot: Bot,
     userService: UserService,
     jiraClientFactory: JiraClientFactory,
 ) {
+    /** Credential کاربر را می‌گیرد و سرویس‌های Jira مناسب را برمی‌گرداند. */
     async function getServicesForUser(userId: number) {
         const credentials = await userService.getJiraCredentials(userId);
         if (!credentials) return null;

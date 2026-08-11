@@ -11,12 +11,18 @@ import { registerMyTasksHandler } from "./handlers/my-tasks.handler.js";
 import { registerIssueDetailHandler } from "./handlers/issue-detail.handler.js";
 import { registerTransitionHandler } from "./handlers/transition.handler.js";
 
+/** وابستگی‌های مشترک بین تمام handler‌ها */
 interface HandlerDependencies {
     userService: UserService;
     jiraClientFactory: JiraClientFactory;
     stateManager: ConversationStateManager;
 }
 
+/**
+ * تمام handler‌های bot را ثبت می‌کند.
+ * ترتیب ثبت مهم است — `registerConnectJiraHandler` باید اول باشد
+ * چون `bot.on("message:text")` را ثبت می‌کند که پیام‌های متنی را رهگیری می‌کند.
+ */
 export function registerHandlers(
     bot: Bot,
     dependencies: HandlerDependencies,

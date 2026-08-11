@@ -7,6 +7,10 @@ import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
 import { formatIssue } from "../formatters/issue.formatter.js";
 import { issueDetailKeyboard } from "../keyboards/issue-detail.keyboard.js";
 
+/**
+ * Handler جزئیات یک Issue را ثبت می‌کند.
+ * الگوی callback: `issue:<issueKey>` (مثال: `issue:PROJ-123`).
+ */
 export function registerIssueDetailHandler(
     bot: Bot,
     userService: UserService,

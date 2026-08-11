@@ -7,6 +7,11 @@ import { mainKeyboard } from "../keyboards/main.keyboard.js";
 import { settingsKeyboard } from "../keyboards/settings.keyboard.js";
 import { connectJiraKeyboard } from "../keyboards/connect-jira.keyboard.js";
 
+/**
+ * Handler‌های صفحه تنظیمات را ثبت می‌کند.
+ * Callback‌های پشتیبانی‌شده: `settings`، `back_to_main`، `disconnect_jira`.
+ * هنگام قطع اتصال، وضعیت مکالمه کاربر هم پاک می‌شود.
+ */
 export function registerSettingsHandler(
     bot: Bot,
     userService: UserService,

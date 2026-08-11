@@ -10,6 +10,11 @@ import {
 } from "../formatters/issue.formatter.js";
 import { issueListKeyboard } from "../keyboards/issue.keyboard.js";
 
+/**
+ * Handler لیست تسک‌ها را ثبت می‌کند.
+ * الگوی callback: `my_tasks` یا `my_tasks:<page>` (صفحه‌بندی).
+ * هر بار یک JiraClient تازه برای کاربر جاری می‌سازد.
+ */
 export function registerMyTasksHandler(
     bot: Bot,
     userService: UserService,

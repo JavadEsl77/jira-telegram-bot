@@ -4,6 +4,11 @@ import type { UserService } from "../../user/user.service.js";
 import { mainKeyboard } from "../keyboards/main.keyboard.js";
 import { connectJiraKeyboard } from "../keyboards/connect-jira.keyboard.js";
 
+/**
+ * Handler دستور `/start` را ثبت می‌کند.
+ * اگر کاربر به Jira متصل باشد، منوی اصلی نمایش می‌دهد؛
+ * در غیر این صورت، صفحه اتصال به Jira را نشان می‌دهد.
+ */
 export function registerStartHandler(bot: Bot, userService: UserService) {
     bot.command("start", async (ctx) => {
         const userId = ctx.from?.id;

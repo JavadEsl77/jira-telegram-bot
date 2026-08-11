@@ -9,6 +9,10 @@ import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
 import { mainKeyboard } from "../keyboards/main.keyboard.js";
 import { retryConnectJiraKeyboard } from "../keyboards/connect-jira.keyboard.js";
 
+/**
+ * خطای Jira را به پیام فارسی قابل‌نمایش تبدیل می‌کند.
+ * بین خطاهای ۴۰۱/۴۰۳/۴۰۴/5xx و خطای شبکه تمایز قائل می‌شود.
+ */
 function classifyError(err: unknown): string {
     if (axios.isAxiosError(err)) {
         const status = err.response?.status;
@@ -21,6 +25,15 @@ function classifyError(err: unknown): string {
     return "❌ خطای ناشناخته در اتصال به Jira.";
 }
 
+/**
+ * Handler جریان اتصال Jira را ثبت می‌کند.
+ *
+ * دو handler ثبت می‌کند:
+ * 1. callback `connect_jira` — وضعیت کاربر را به `waiting_for_jira_token` تغییر می‌دهد
+ * 2. `message:text` — PAT را دریافت می‌کند، با `/myself` تأیید می‌کند، و ذخیره می‌کند
+ *
+ * این handler باید اول از همه ثبت شود تا text interceptor فعال باشد.
+ */
 export function registerConnectJiraHandler(
     bot: Bot,
     userService: UserService,

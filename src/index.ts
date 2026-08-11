@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { createApp } from "./app.js";
 
+/** نقطه ورود اصلی برنامه — اپلیکیشن را می‌سازد و بات را راه‌اندازی می‌کند. */
 async function main() {
     const { bot } = createApp();
 
