@@ -13,7 +13,7 @@ export function issueListKeyboard(
         keyboard
             .text(
                 `🎫 ${issue.key}`,
-                `issue:${issue.key}`,
+                `issue:${issue.key}:${page}`,
             )
             .row();
     }
@@ -35,6 +35,8 @@ export function issueListKeyboard(
 
         keyboard.row();
     }
+
+    keyboard.text("🏠 منوی اصلی", "back_to_main");
 
     return keyboard;
 }

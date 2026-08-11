@@ -16,8 +16,9 @@ export function registerIssueDetailHandler(
     userService: UserService,
     jiraClientFactory: JiraClientFactory,
 ) {
-    bot.callbackQuery(/^issue:(.+)$/, async (ctx) => {
+    bot.callbackQuery(/^issue:([^:]+)(?::(\d+))?$/, async (ctx) => {
         const issueKey = ctx.match[1];
+        const fromPage = Number(ctx.match[2] ?? 1);
 
         await ctx.answerCallbackQuery();
 
@@ -34,7 +35,7 @@ export function registerIssueDetailHandler(
             const issue = await issueService.getIssue(issueKey ?? "");
 
             await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
+                reply_markup: issueDetailKeyboard(issue.key, fromPage),
             });
         } catch (error) {
             console.error(`Failed to fetch issue ${issueKey}`, error);
