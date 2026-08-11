@@ -95,12 +95,24 @@ export class JiraClient {
 
     /**
      * یک کامنت را به Issue اضافه می‌کند.
-     * @param issueKey - کلید Issue
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
      * @param body - متن کامنت
      */
     async addComment(issueKey: string, body: string) {
         await this.client.post(`/issue/${issueKey}/comment`, {
             body,
         });
+    }
+
+    /**
+     * یک Worklog به Issue اضافه می‌کند.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     * @param data - اطلاعات Worklog
+     */
+    async addWorklog(issueKey: string, data: {
+        timeSpent: string;
+        started: string;
+    }) {
+        await this.client.post(`/issue/${issueKey}/worklog`, data);
     }
 }

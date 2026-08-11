@@ -56,6 +56,15 @@ Encryption boundary: **`DatabaseUserRepository`**. The `UserService` and handler
 
 `ConversationStateManager` uses a `Map<number, ConversationState>` keyed by Telegram user ID. It is intentionally ephemeral — losing state on restart is acceptable for a conversation flow. Do NOT persist conversation state to the database.
 
+States:
+- `idle`
+- `waiting_for_jira_token`
+- `waiting_for_comment`
+- `waiting_for_worklog_duration`
+- `selecting_worklog_date`
+- `selecting_worklog_time`
+- `confirm_worklog`
+
 ### 5. Handler Registration Order Matters
 
 In `src/bot/register-handlers.ts`, `registerConnectJiraHandler` **must be first** because it registers a `bot.on("message:text")` handler that intercepts text messages during auth flow and calls `next()` when idle.
@@ -86,27 +95,34 @@ src/
 │       ├── issue.service.ts       getMyTasks (paginated), getIssue
 │       ├── transition.service.ts  getAvailable, transition, transitionTo
 │       ├── search.service.ts      search (JQL), searchText (full-text)
-│       ├── comment.service.ts     [empty stub — not yet implemented]
-│       ├── worklog.service.ts     [empty stub — not yet implemented]
+│       ├── comment.service.ts     addComment
+│       ├── worklog.service.ts     addWorklog
 │       └── sprint.service.ts      [empty stub — not yet implemented]
 │
 └── bot/
     ├── bot.ts                     createBot() — reads BOT_TOKEN from env
     ├── register-handlers.ts       Registers all handlers (order matters — see above)
     ├── conversation-state.ts      ConversationStateManager — per-user state Map
+    ├── utils/
+    │   ├── duration-parser.ts     Duration parser (1h 30m, 45m, etc.)
+    │   ├── calendar.ts            Jalali calendar utilities
+    │   └── timezone.ts            Timezone utilities
     ├── handlers/
     │   ├── start.handler.ts       /start — checks auth, shows main menu or connect prompt
     │   ├── connect-jira.handler.ts  Auth flow + text interceptor + error classification
     │   ├── settings.handler.ts    Settings page, back_to_main, disconnect_jira
     │   ├── my-tasks.handler.ts    Paginated task list
     │   ├── issue-detail.handler.ts  Issue detail view
-    │   └── transition.handler.ts  Status transitions (show → confirm → execute)
+    │   ├── transition.handler.ts  Status transitions (show → confirm → execute)
+    │   ├── comment.handler.ts     Add comment flow
+    │   └── worklog.handler.ts     Worklog flow (duration → date → time → confirm)
     ├── keyboards/
     │   ├── main.keyboard.ts       Main menu (My Tasks, Search, Settings)
     │   ├── connect-jira.keyboard.ts  Connect / Retry buttons
     │   ├── settings.keyboard.ts   Settings page buttons
     │   ├── issue.keyboard.ts      Issue list keyboard (pagination)
-    │   └── issue-detail.keyboard.ts  Issue detail buttons (Transition, Comment, Worklog, Back)
+    │   ├── issue-detail.keyboard.ts  Issue detail buttons (Transition, Comment, Worklog, Back)
+    │   └── worklog.keyboard.ts    Worklog flow keyboards
     └── formatters/
         └── issue.formatter.ts     formatIssue, formatIssueCard, formatIssueList
 
@@ -155,6 +171,7 @@ CREATE TABLE "User" (
 | `JIRA_TOKEN_ENCRYPTION_KEY` | ✅ | 64 hex chars (32 bytes) for AES-256-GCM |
 | `NODE_ENV` | — | `development` or `production` |
 | `TEST_JIRA_TOKEN` | — | Only for `scripts/test-jira-auth.ts` |
+| `APP_TIMEZONE` | — | Timezone for date/time operations (default: `Asia/Tehran`) |
 
 Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 

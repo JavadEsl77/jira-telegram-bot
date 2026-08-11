@@ -1,10 +1,14 @@
 /**
- * مرحله جاری کاربر در جریان مکالمه.
- * - `idle`: کاربر در هیچ جریان فعالی نیست
- * - `waiting_for_jira_token`: منتظر دریافت Personal Access Token است
- * - `waiting_for_comment`: منتظر متن کامنت برای یک Issue است
+ * مراحل جریان ثبت Worklog.
  */
-export type ConversationStep = "idle" | "waiting_for_jira_token" | "waiting_for_comment";
+export type ConversationStep =
+    | "idle"
+    | "waiting_for_jira_token"
+    | "waiting_for_comment"
+    | "waiting_for_worklog_duration"
+    | "selecting_worklog_date"
+    | "selecting_worklog_time"
+    | "confirm_worklog";
 
 interface ConversationState {
     step: ConversationStep;
@@ -12,6 +16,21 @@ interface ConversationState {
     issueKey?: string;
     /** متن کامنت که کاربر ارسال کرده (برای پیش‌نمایش) */
     commentBody?: string;
+
+    /** مدت زمان واردشده برای Worklog (مثلاً "1h 30m") */
+    worklogDuration?: string;
+    /** کل زمان به دقیقه */
+    worklogDurationMinutes?: number;
+    /** تاریخ انتخاب‌شده به فرمت YYYY-MM-DD (میلادی) */
+    worklogSelectedDate?: string;
+    /** تاریخ و ساعت شروع به فرمت ISO */
+    worklogStartedAt?: string;
+    /** ماه جاری تقویم ( Jalali year) */
+    worklogCalendarYear?: number;
+    /** ماه جاری تقویم (Jalali month) */
+    worklogCalendarMonth?: number;
+    /** وضعیت در حال ثبت (برای جلوگیری از دوبار کلیک) */
+    worklogSubmitting?: boolean;
 }
 
 /**

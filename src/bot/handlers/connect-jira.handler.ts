@@ -8,6 +8,9 @@ import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
 
 import { mainKeyboard } from "../keyboards/main.keyboard.js";
 import { retryConnectJiraKeyboard } from "../keyboards/connect-jira.keyboard.js";
+import { worklogDateKeyboard, worklogPreviewKeyboard } from "../keyboards/worklog.keyboard.js";
+import { parseDuration, formatDuration, looksLikeDuration } from "../utils/duration-parser.js";
+
 
 /**
  * خطای Jira را به پیام فارسی قابل‌نمایش تبدیل می‌کند.
@@ -157,5 +160,191 @@ export function registerConnectJiraHandler(
                 { reply_markup: previewKeyboard },
             );
         }
+
+        if (state.step === "waiting_for_worklog_duration") {
+            const trimmed = text.trim();
+
+            if (!looksLikeDuration(trimmed)) {
+                await ctx.reply(
+                    [
+                        "❌ فرمت زمان صحیح نیست.",
+                        "",
+                        "مثال:",
+                        "1h 30m",
+                        "45m",
+                        "2h",
+                    ].join("\n"),
+                );
+                return;
+            }
+
+            const parsed = parseDuration(trimmed);
+            if (!parsed) {
+                await ctx.reply(
+                    [
+                        "❌ فرمت زمان صحیح نیست.",
+                        "",
+                        "مثال:",
+                        "1h 30m",
+                        "45m",
+                        "2h",
+                    ].join("\n"),
+                );
+                return;
+            }
+
+            const issueKey = state.issueKey ?? "";
+            const durationStr = formatDuration(parsed);
+
+            const now = new Date();
+            let startTime = new Date(now);
+            startTime.setMinutes(startTime.getMinutes() - parsed.totalMinutes);
+
+            const startedAt = buildIsoDateTime(startTime);
+
+            stateManager.setState(userId, {
+                step: "selecting_worklog_date",
+                issueKey,
+                worklogDuration: durationStr,
+                worklogDurationMinutes: parsed.totalMinutes,
+                worklogStartedAt: startedAt,
+            });
+
+            await ctx.reply(
+                [
+                    "📅 تاریخ انجام کار",
+                    "",
+                    "زمانی که این کار را انجام دادی انتخاب کن:",
+                ].join("\n"),
+                { reply_markup: worklogDateKeyboard(issueKey) },
+            );
+        }
+
+        if (state.step === "selecting_worklog_time") {
+            const trimmed = text.trim();
+
+            if (!/^\d{2}:\d{2}$/.test(trimmed)) {
+                await ctx.reply(
+                    [
+                        "❌ ساعت واردشده معتبر نیست.",
+                        "",
+                        "مثال:",
+                        "14:30",
+                    ].join("\n"),
+                );
+                return;
+            }
+
+            const [hoursStr, minutesStr] = trimmed.split(":");
+            const hours = Number.parseInt(hoursStr ?? "", 10);
+            const minutes = Number.parseInt(minutesStr ?? "", 10);
+
+            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                await ctx.reply(
+                    [
+                        "❌ ساعت واردشده معتبر نیست.",
+                        "",
+                        "مثال:",
+                        "14:30",
+                    ].join("\n"),
+                );
+                return;
+            }
+
+            const issueKey = state.issueKey ?? "";
+            const dateStr = state.worklogSelectedDate ?? getTodayString();
+
+            const startTime = new Date(`${dateStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`);
+            const startedAt = buildIsoDateTime(startTime);
+
+            stateManager.setState(userId, {
+                ...state,
+                step: "confirm_worklog",
+                worklogStartedAt: startedAt,
+            });
+
+            const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+            const previewText = [
+                "⏱ پیش‌نمایش ثبت زمان",
+                "",
+                `🎫 ${issueKey}`,
+                "",
+                `📅 تاریخ: ${formatDatePersian(dateStr)}`,
+                `🕐 شروع: ${timeStr}`,
+                `⏱ مدت: ${state.worklogDuration ?? ""}`,
+                "",
+                "آیا این زمان ثبت شود؟",
+            ].join("\n");
+
+            await ctx.reply(previewText, {
+                reply_markup: worklogPreviewKeyboard(issueKey),
+            });
+            return;
+        }
     });
+
+    bot.on("message", async (ctx, next) => {
+        const userId = ctx.from.id;
+        const state = stateManager.getState(userId);
+
+        if (state.step === "idle") {
+            return next();
+        }
+
+        if (
+            state.step === "waiting_for_worklog_duration" ||
+            state.step === "selecting_worklog_time"
+        ) {
+            if (!ctx.message.text) {
+                await ctx.reply("❌ لطفاً مقدار را به صورت متنی ارسال کنید.");
+                return;
+            }
+        }
+
+        return next();
+    });
+}
+
+function formatDatePersian(dateStr: string): string {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+
+    const year = Number.parseInt(parts[0] ?? "", 10);
+    const month = Number.parseInt(parts[1] ?? "", 10);
+    const day = Number.parseInt(parts[2] ?? "", 10);
+
+    const { toJalaali } = require("jalaali-js") as typeof import("jalaali-js");
+    const j = toJalaali(year, month, day);
+    const persianMonth = [
+        "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+        "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
+    ];
+
+    return `${j.jd} ${persianMonth[j.jm - 1]} ${j.jy}`;
+}
+
+function buildIsoDateTime(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const ms = String(date.getMilliseconds()).padStart(3, "0");
+
+    const rawOffset = -date.getTimezoneOffset();
+    const sign = rawOffset >= 0 ? "+" : "-";
+    const absOffset = Math.abs(rawOffset);
+    const tzHours = String(Math.floor(absOffset / 60)).padStart(2, "0");
+    const tzMins = String(absOffset % 60).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}${sign}${tzHours}${tzMins}`;
+}
+
+function getTodayString(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }

@@ -13,6 +13,8 @@
 | 📋 لیست تسک‌ها | تسک‌های تخصیص‌یافته به کاربر با pagination |
 | 🎫 جزئیات Issue | وضعیت، اولویت، مسئول، برچسب‌ها |
 | 🔄 تغییر وضعیت | انتقال Issue بین وضعیت‌ها با تأییدیه |
+| ⏱ ثبت زمان (Worklog) | ثبت ساعت کار روی Issue با تقویم شمسی |
+| 💬 افزودن کامنت | کامنت به Issue اضافه کردن |
 | ⚙️ تنظیمات | قطع و وصل کردن حساب Jira |
 
 ---
@@ -126,27 +128,34 @@ src/
 │       ├── issue.service.ts       # دریافت و لیست Issue‌ها
 │       ├── transition.service.ts  # تغییر وضعیت Issue
 │       ├── search.service.ts      # جستجو با JQL
-│       ├── comment.service.ts     # (stub — پیاده‌سازی نشده)
-│       ├── worklog.service.ts     # (stub — پیاده‌سازی نشده)
-│       └── sprint.service.ts      # (stub — پیاده‌سازی نشده)
+│       ├── comment.service.ts     # افزودن کامنت
+│       ├── worklog.service.ts     # ثبت Worklog
+│       └── sprint.service.ts      # (stub)
 │
 └── bot/
     ├── bot.ts                  # ایجاد instance بات
     ├── register-handlers.ts    # ثبت تمام handler‌ها
     ├── conversation-state.ts   # مدیر وضعیت مکالمه per-user
+    ├── utils/
+    │   ├── duration-parser.ts  # پارس کردن مدت زمان
+    │   ├── calendar.ts         # تقویم شمسی
+    │   └── timezone.ts         # مدیریت timezone
     ├── handlers/
     │   ├── start.handler.ts        # دستور /start
-    │   ├── connect-jira.handler.ts # جریان اتصال Jira
+    │   ├── connect-jira.handler.ts # جریان اتصال Jira + interceptor
     │   ├── settings.handler.ts     # تنظیمات و قطع اتصال
     │   ├── my-tasks.handler.ts     # لیست تسک‌ها
     │   ├── issue-detail.handler.ts # جزئیات Issue
-    │   └── transition.handler.ts   # تغییر وضعیت
+    │   ├── transition.handler.ts   # تغییر وضعیت
+    │   ├── comment.handler.ts      # افزودن کامنت
+    │   └── worklog.handler.ts      # ثبت Worklog
     ├── keyboards/
     │   ├── main.keyboard.ts
     │   ├── connect-jira.keyboard.ts
     │   ├── settings.keyboard.ts
     │   ├── issue.keyboard.ts
-    │   └── issue-detail.keyboard.ts
+    │   ├── issue-detail.keyboard.ts
+    │   └── worklog.keyboard.ts
     └── formatters/
         └── issue.formatter.ts  # فرمت‌بندی Issue برای Telegram
 
