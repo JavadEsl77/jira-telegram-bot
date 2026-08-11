@@ -123,9 +123,12 @@ src/
 │   ├── jira.client.factory.ts  # ساخت JiraClient per-user
 │   ├── jira.types.ts           # TypeScript types برای API Jira
 │   └── services/
-│       ├── issue.service.ts    # دریافت و لیست Issue‌ها
+│       ├── issue.service.ts       # دریافت و لیست Issue‌ها
 │       ├── transition.service.ts  # تغییر وضعیت Issue
-│       └── search.service.ts   # جستجو با JQL
+│       ├── search.service.ts      # جستجو با JQL
+│       ├── comment.service.ts     # (stub — پیاده‌سازی نشده)
+│       ├── worklog.service.ts     # (stub — پیاده‌سازی نشده)
+│       └── sprint.service.ts      # (stub — پیاده‌سازی نشده)
 │
 └── bot/
     ├── bot.ts                  # ایجاد instance بات
@@ -147,9 +150,14 @@ src/
     └── formatters/
         └── issue.formatter.ts  # فرمت‌بندی Issue برای Telegram
 
+prisma.config.ts                # تنظیمات Prisma 7 — آدرس datasource (سطح root)
+
 prisma/
 ├── schema.prisma               # مدل پایگاه داده
 └── migrations/                 # تاریخچه migration ها
+
+scripts/
+└── test-jira-auth.ts           # تست مستقل اتصال Jira (Bearer auth)
 ```
 
 ---

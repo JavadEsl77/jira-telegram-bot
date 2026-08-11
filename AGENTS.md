@@ -85,7 +85,10 @@ src/
 │   └── services/
 │       ├── issue.service.ts       getMyTasks (paginated), getIssue
 │       ├── transition.service.ts  getAvailable, transition, transitionTo
-│       └── search.service.ts      search (JQL), searchText (full-text)
+│       ├── search.service.ts      search (JQL), searchText (full-text)
+│       ├── comment.service.ts     [empty stub — not yet implemented]
+│       ├── worklog.service.ts     [empty stub — not yet implemented]
+│       └── sprint.service.ts      [empty stub — not yet implemented]
 │
 └── bot/
     ├── bot.ts                     createBot() — reads BOT_TOKEN from env
@@ -107,15 +110,18 @@ src/
     └── formatters/
         └── issue.formatter.ts     formatIssue, formatIssueCard, formatIssueList
 
+prisma.config.ts                   Prisma 7 config — datasource URL for migrations (ROOT level)
+
 prisma/
 ├── schema.prisma                  SQLite schema — User model
-├── prisma.config.ts               Prisma 7 config (datasource URL for migrations)
 └── migrations/                    Migration history
 
 scripts/
-└── test-jira-auth.ts              Diagnostic — tests Bearer vs Basic auth against /myself
+└── test-jira-auth.ts              Diagnostic — tests Bearer auth against /myself
 
-src/jira/test-*.ts                 Manual debug scripts (not for production)
+src/jira/
+└── test-*.ts                      Manual debug scripts (test-connection, test-my-tasks,
+                                   test-search, test-transition) — not for production
 ```
 
 ---
@@ -149,7 +155,6 @@ CREATE TABLE "User" (
 | `JIRA_TOKEN_ENCRYPTION_KEY` | ✅ | 64 hex chars (32 bytes) for AES-256-GCM |
 | `NODE_ENV` | — | `development` or `production` |
 | `TEST_JIRA_TOKEN` | — | Only for `scripts/test-jira-auth.ts` |
-| `TEST_JIRA_USERNAME` | — | Only for `scripts/test-jira-auth.ts` |
 
 Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
