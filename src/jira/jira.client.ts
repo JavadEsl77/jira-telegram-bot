@@ -92,4 +92,15 @@ export class JiraClient {
             transition: { id: transitionId },
         });
     }
+
+    /**
+     * یک کامنت را به Issue اضافه می‌کند.
+     * @param issueKey - کلید Issue
+     * @param body - متن کامنت
+     */
+    async addComment(issueKey: string, body: string) {
+        await this.client.post(`/issue/${issueKey}/comment`, {
+            body,
+        });
+    }
 }

@@ -116,5 +116,46 @@ export function registerConnectJiraHandler(
                 );
             }
         }
+
+        if (state.step === "waiting_for_comment") {
+            const trimmed = text.trim();
+
+            if (!trimmed) {
+                await ctx.reply(
+                    "❌ متن کامنت نمی‌تواند خالی باشد.\n\nلطفاً متن کامنت را ارسال کنید.",
+                );
+                return;
+            }
+
+            if (trimmed.length > 5000) {
+                await ctx.reply(
+                    "❌ متن کامنت بیش از حد طولانی است.\n\nحداکثر 5000 کاراکتر.",
+                );
+                return;
+            }
+
+            const issueKey = state.issueKey ?? "";
+
+            stateManager.setState(userId, {
+                step: "waiting_for_comment",
+                issueKey,
+                commentBody: trimmed,
+            });
+
+            const previewKeyboard = new InlineKeyboard()
+                .text("✅ ارسال کامنت", `comment-confirm:${issueKey}`)
+                .text("❌ لغو", `comment-cancel:${issueKey}`);
+
+            await ctx.reply(
+                [
+                    "💬 پیش‌نمایش کامنت",
+                    "",
+                    trimmed,
+                    "",
+                    "آیا کامنت ارسال شود؟",
+                ].join("\n"),
+                { reply_markup: previewKeyboard },
+            );
+        }
     });
 }

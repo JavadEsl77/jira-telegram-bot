@@ -10,6 +10,7 @@ import { registerSettingsHandler } from "./handlers/settings.handler.js";
 import { registerMyTasksHandler } from "./handlers/my-tasks.handler.js";
 import { registerIssueDetailHandler } from "./handlers/issue-detail.handler.js";
 import { registerTransitionHandler } from "./handlers/transition.handler.js";
+import { registerCommentHandler } from "./handlers/comment.handler.js";
 
 /** وابستگی‌های مشترک بین تمام handler‌ها */
 interface HandlerDependencies {
@@ -38,4 +39,5 @@ export function registerHandlers(
     registerMyTasksHandler(bot, userService, jiraClientFactory);
     registerIssueDetailHandler(bot, userService, jiraClientFactory);
     registerTransitionHandler(bot, userService, jiraClientFactory);
+    registerCommentHandler(bot, userService, jiraClientFactory, stateManager);
 }

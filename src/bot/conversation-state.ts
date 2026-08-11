@@ -2,11 +2,16 @@
  * مرحله جاری کاربر در جریان مکالمه.
  * - `idle`: کاربر در هیچ جریان فعالی نیست
  * - `waiting_for_jira_token`: منتظر دریافت Personal Access Token است
+ * - `waiting_for_comment`: منتظر متن کامنت برای یک Issue است
  */
-export type ConversationStep = "idle" | "waiting_for_jira_token";
+export type ConversationStep = "idle" | "waiting_for_jira_token" | "waiting_for_comment";
 
 interface ConversationState {
     step: ConversationStep;
+    /** کلید Issue در جریان افزودن کامنت */
+    issueKey?: string;
+    /** متن کامنت که کاربر ارسال کرده (برای پیش‌نمایش) */
+    commentBody?: string;
 }
 
 /**
