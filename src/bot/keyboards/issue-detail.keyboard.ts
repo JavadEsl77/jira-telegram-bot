@@ -7,5 +7,5 @@ export function issueDetailKeyboard(issueKey: string, fromPage = 1) {
         .text("💬 کامنت", `comment:${issueKey}`)
         .text("⏱ ثبت زمان", `worklog:${issueKey}`)
         .row()
-        .text("◀️ بازگشت", `my_tasks:${fromPage}`);
+        .text("◀️ بازگشت به لیست", `back_to_list:${fromPage}`);
 }

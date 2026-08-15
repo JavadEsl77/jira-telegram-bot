@@ -37,9 +37,9 @@ export function registerHandlers(
 
     registerStartHandler(bot, userService);
     registerSettingsHandler(bot, userService, stateManager);
-    registerMyTasksHandler(bot, userService, jiraClientFactory);
-    registerIssueDetailHandler(bot, userService, jiraClientFactory);
-    registerTransitionHandler(bot, userService, jiraClientFactory);
+    registerMyTasksHandler(bot, userService, jiraClientFactory, stateManager);
+    registerIssueDetailHandler(bot, userService, jiraClientFactory, stateManager);
+    registerTransitionHandler(bot, userService, jiraClientFactory, stateManager);
     registerCommentHandler(bot, userService, jiraClientFactory, stateManager);
     registerWorklogHandler(bot, userService, jiraClientFactory, stateManager);
 }

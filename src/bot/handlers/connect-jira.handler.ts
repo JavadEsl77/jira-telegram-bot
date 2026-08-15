@@ -51,9 +51,11 @@ export function registerConnectJiraHandler(
 
         await ctx.editMessageText(
             [
-                "لطفاً Personal Access Token حساب Jira خود را ارسال کنید.",
+                "🔐 برای اتصال به Jira، به Access Token اکانتت نیاز داریم.",
                 "",
-                "Token را می‌توانید از پروفایل Jira خود → Personal Access Tokens ایجاد کنید.",
+                "وارد Jira شو و از مسیر Profile → Personal Access Tokens یک Token جدید بساز و سپس Token رو همینجا برای من ارسال کن.",
+                "",
+                "⚠️ توکن فقط برای اتصال بات به حساب Jira شما استفاده میشه.",
             ].join("\n"),
             { reply_markup: new InlineKeyboard() },
         );

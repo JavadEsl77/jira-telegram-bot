@@ -63,9 +63,11 @@ export function registerWorklogHandler(
             return;
         }
 
+        const currentState = stateManager.getState(ctx.from.id);
         stateManager.setState(ctx.from.id, {
             step: "waiting_for_worklog_duration",
             issueKey,
+            fromPage: currentState.fromPage,
         });
 
         await ctx.editMessageText(
@@ -246,19 +248,23 @@ export function registerWorklogHandler(
                 state.worklogStartedAt,
             );
 
+            const fromPage = state.fromPage ?? 1;
             stateManager.clearState(ctx.from.id);
 
-            const issueService = new IssueService(jiraClient);
-            const issue = await issueService.getIssue(issueKey);
-
-            await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
-            });
-
-            await ctx.answerCallbackQuery({
-                text: `✅ ${state.worklogDuration} با موفقیت ثبت شد`,
-                show_alert: true,
-            });
+            await ctx.editMessageText(
+                [
+                    "✅ زمان با موفقیت ثبت شد",
+                    "",
+                    `🎫 ${issueKey}`,
+                    `⏱ ${state.worklogDuration}`,
+                ].join("\n"),
+                {
+                    reply_markup: new InlineKeyboard()
+                        .text("◀️ بازگشت به لیست", `back_to_list:${fromPage}`)
+                        .row()
+                        .text("🏠 منوی اصلی", "back_to_main"),
+                },
+            );
         } catch (error) {
             const errStatus = axios.isAxiosError(error) ? error.response?.status : "unknown";
             console.error(`Failed to add worklog to ${issueKey}: status=${errStatus}`);
@@ -368,6 +374,7 @@ export function registerWorklogHandler(
         const issueKey = ctx.match[1] ?? "";
 
         await ctx.answerCallbackQuery();
+        const cancelState = stateManager.getState(ctx.from.id);
         stateManager.clearState(ctx.from.id);
 
         const credentials = await userService.getJiraCredentials(ctx.from.id);
@@ -382,7 +389,7 @@ export function registerWorklogHandler(
             const issue = await issueService.getIssue(issueKey);
 
             await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
+                reply_markup: issueDetailKeyboard(issue.key, cancelState.fromPage),
             });
         } catch (error) {
             console.error(`Failed to fetch issue ${issueKey} on worklog cancel`, error);

@@ -64,9 +64,11 @@ export function registerCommentHandler(
             return;
         }
 
+        const currentState = stateManager.getState(ctx.from.id);
         stateManager.setState(ctx.from.id, {
             step: "waiting_for_comment",
             issueKey: issueKey ?? "",
+            fromPage: currentState.fromPage,
         });
 
         await ctx.editMessageText(
@@ -115,17 +117,22 @@ export function registerCommentHandler(
                 commentBody,
             );
 
+            const fromPage = state.fromPage ?? 1;
             stateManager.clearState(ctx.from.id);
 
-            const issue = await services.issueService.getIssue(issueKey ?? "");
-
-            await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
-            });
-
-            await ctx.answerCallbackQuery({
-                text: "✅ کامنت با موفقیت اضافه شد",
-            });
+            await ctx.editMessageText(
+                [
+                    "✅ کامنت با موفقیت ثبت شد",
+                    "",
+                    `🎫 ${issueKey}`,
+                ].join("\n"),
+                {
+                    reply_markup: new InlineKeyboard()
+                        .text("◀️ بازگشت به لیست", `back_to_list:${fromPage}`)
+                        .row()
+                        .text("🏠 منوی اصلی", "back_to_main"),
+                },
+            );
         } catch (error) {
             console.error(`Failed to add comment to ${issueKey}`, error);
             stateManager.clearState(ctx.from.id);
@@ -141,6 +148,7 @@ export function registerCommentHandler(
 
         await ctx.answerCallbackQuery();
 
+        const cancelState = stateManager.getState(ctx.from.id);
         stateManager.clearState(ctx.from.id);
 
         const services = await getServicesForUser(ctx.from.id);
@@ -154,7 +162,7 @@ export function registerCommentHandler(
             const issue = await services.issueService.getIssue(issueKey ?? "");
 
             await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
+                reply_markup: issueDetailKeyboard(issue.key, cancelState.fromPage),
             });
         } catch (error) {
             console.error(`Failed to fetch issue ${issueKey} on cancel`, error);

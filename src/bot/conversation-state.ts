@@ -31,6 +31,10 @@ interface ConversationState {
     worklogCalendarMonth?: number;
     /** وضعیت در حال ثبت (برای جلوگیری از دوبار کلیک) */
     worklogSubmitting?: boolean;
+    /** شناسه تمام پیام‌های لیست جاری: [header, card1, card2, ..., pagination] */
+    taskListAllMessageIds?: number[];
+    /** شماره صفحه‌ای که کاربر از آن وارد Issue Detail شده — برای بازگشت به همان صفحه */
+    fromPage?: number;
 }
 
 /**

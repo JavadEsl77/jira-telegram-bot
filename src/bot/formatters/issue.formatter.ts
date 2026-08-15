@@ -1,5 +1,27 @@
 import type { JiraIssue } from "../../jira/jira.types.js";
 
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function formatRelativeDateEn(date?: string): string {
+    if (!date) return "unknown";
+
+    const diff = Date.now() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+
+    return new Date(date).toLocaleDateString("en-US");
+}
+
 /**
  * تاریخ را به فرمت نسبی فارسی تبدیل می‌کند.
  * مثال: "۵ دقیقه پیش"، "۲ ساعت پیش"، "۳ روز پیش"
@@ -165,28 +187,42 @@ export function formatIssueCard(
 }
 
 /**
+ * کارت مینیمال یک Issue برای نمایش در لیست «تسک‌های من».
+ * فقط: کلید، عنوان، لینک Jira، وضعیت، آخرین بروزرسانی.
+ * خروجی HTML است — هنگام ارسال باید parse_mode: "HTML" تنظیم شود.
+ * @param issue - Issue دریافت‌شده از Jira
+ * @param jiraBaseUrl - آدرس پایه Jira (بدون slash انتهایی)
+ */
+export function formatIssueCardMinimal(issue: JiraIssue, jiraBaseUrl: string): string {
+    const status = issue.fields.status?.name;
+    const jiraUrl = `${jiraBaseUrl}/browse/${issue.key}`;
+
+    return [
+        `🎫 ${escapeHtml(issue.key)}`,
+        "",
+        escapeHtml(issue.fields.summary),
+        "",
+        `<a href="${jiraUrl}">🔗 View in Jira</a>`,
+        `${getStatusEmoji(status)} ${escapeHtml(status ?? "Unknown")}`,
+        `🕐 ${formatRelativeDateEn(issue.fields.updated)}`,
+    ].join("\n");
+}
+
+/**
  * هدر صفحه‌بندی‌شده لیست Issue‌ها را فرمت می‌کند.
- * @param issues - آرایه Issue‌های صفحه جاری
+ * @param total - تعداد کل Issue‌ها (از Jira)
  * @param page - شماره صفحه جاری
  * @param totalPages - تعداد کل صفحات
  */
 export function formatIssueList(
-    issues: JiraIssue[],
+    total: number,
     page: number,
     totalPages: number,
 ): string {
-    if (issues.length === 0) {
-        return [
-            "📋 تسک‌های من",
-            "",
-            "تسکی برای نمایش پیدا نشد.",
-        ].join("\n");
-    }
-
     return [
         "📋 تسک‌های من",
         "",
-        `تعداد کل: ${issues.length}`,
+        `تعداد کل: ${total}`,
         `صفحه ${page} از ${totalPages}`,
     ].join("\n");
 }

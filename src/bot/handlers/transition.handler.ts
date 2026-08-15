@@ -1,12 +1,10 @@
 import type { Bot } from "grammy";
+import { InlineKeyboard } from "grammy";
 
-import { IssueService } from "../../jira/services/issue.service.js";
 import { TransitionService } from "../../jira/services/transition.service.js";
 import type { UserService } from "../../user/user.service.js";
 import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
-
-import { formatIssue } from "../formatters/issue.formatter.js";
-import { issueDetailKeyboard } from "../keyboards/issue-detail.keyboard.js";
+import type { ConversationStateManager } from "../conversation-state.js";
 
 /**
  * Handler‌های تغییر وضعیت Issue را ثبت می‌کند.
@@ -20,14 +18,14 @@ export function registerTransitionHandler(
     bot: Bot,
     userService: UserService,
     jiraClientFactory: JiraClientFactory,
+    stateManager: ConversationStateManager,
 ) {
-    /** Credential کاربر را می‌گیرد و سرویس‌های Jira مناسب را برمی‌گرداند. */
+    /** Credential کاربر را می‌گیرد و سرویس transition مناسب را برمی‌گرداند. */
     async function getServicesForUser(userId: number) {
         const credentials = await userService.getJiraCredentials(userId);
         if (!credentials) return null;
         const jiraClient = jiraClientFactory.createForUser(credentials);
         return {
-            issueService: new IssueService(jiraClient),
             transitionService: new TransitionService(jiraClient),
         };
     }
@@ -130,15 +128,21 @@ export function registerTransitionHandler(
                 transitionId ?? "",
             );
 
-            const issue = await services.issueService.getIssue(issueKey ?? "");
+            const fromPage = stateManager.getState(ctx.from.id).fromPage ?? 1;
 
-            await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key),
-            });
-
-            await ctx.answerCallbackQuery({
-                text: "✅ وضعیت با موفقیت تغییر کرد",
-            });
+            await ctx.editMessageText(
+                [
+                    "✅ وضعیت با موفقیت تغییر کرد",
+                    "",
+                    `🎫 ${issueKey}`,
+                ].join("\n"),
+                {
+                    reply_markup: new InlineKeyboard()
+                        .text("◀️ بازگشت به لیست", `back_to_list:${fromPage}`)
+                        .row()
+                        .text("🏠 منوی اصلی", "back_to_main"),
+                },
+            );
         } catch (error) {
             console.error(error);
             await ctx.editMessageText(
