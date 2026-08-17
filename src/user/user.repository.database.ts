@@ -40,6 +40,7 @@ export class DatabaseUserRepository implements UserRepository {
         return {
             telegramId,
             jira,
+            taskPageSize: record.taskPageSize,
             createdAt: record.createdAt,
             updatedAt: record.updatedAt,
         };
@@ -67,10 +68,11 @@ export class DatabaseUserRepository implements UserRepository {
 
         await this.prisma.user.upsert({
             where: { telegramId: BigInt(user.telegramId) },
-            update: { ...jiraData },
+            update: { ...jiraData, taskPageSize: user.taskPageSize },
             create: {
                 telegramId: BigInt(user.telegramId),
                 ...jiraData,
+                taskPageSize: user.taskPageSize,
             },
         });
     }

@@ -1,7 +1,22 @@
 import type { JiraIssue } from "../../jira/jira.types.js";
+import { gregorianToJalali, getPersianMonthName } from "../utils/calendar.js";
 
 function escapeHtml(text: string): string {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** تاریخ میلادی را به فرمت عددی شمسی «YYYY/MM/DD» تبدیل می‌کند */
+function formatJalaliNumeric(date: Date): string {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const { jy, jm, jd } = gregorianToJalali(dateStr);
+    return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
+}
+
+/** تاریخ میلادی را به فرمت شمسی «روز ماه سال» تبدیل می‌کند */
+function formatJalaliPersian(date: Date): string {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const { jy, jm, jd } = gregorianToJalali(dateStr);
+    return `${jd} ${getPersianMonthName(jm)} ${jy}`;
 }
 
 function formatRelativeDateEn(date?: string): string {
@@ -19,7 +34,7 @@ function formatRelativeDateEn(date?: string): string {
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}d ago`;
 
-    return new Date(date).toLocaleDateString("en-US");
+    return formatJalaliNumeric(new Date(date));
 }
 
 /**
@@ -56,7 +71,7 @@ function formatRelativeDate(date?: string): string {
         return `${days} روز پیش`;
     }
 
-    return new Date(date).toLocaleDateString("fa-IR");
+    return formatJalaliPersian(new Date(date));
 }
 
 /** ایموجی متناسب با وضعیت Issue را برمی‌گرداند */
@@ -193,14 +208,52 @@ export function formatIssueCard(
  * @param issue - Issue دریافت‌شده از Jira
  * @param jiraBaseUrl - آدرس پایه Jira (بدون slash انتهایی)
  */
+const CARD_WIDTH_CHARS = 30;
+const CARD_MAX_SUMMARY_LINES = 3;
+const CARD_SEPARATOR = "┈".repeat(26);
+
+/**
+ * عنوان Issue را در عرض ثابت می‌شکند تا کارت از حد معینی بزرگ‌تر نشود.
+ * خط‌ها حداکثر CARD_WIDTH_CHARS کاراکتر هستند و در صورت عبور از CARD_MAX_SUMMARY_LINES خط، با «…» کوتاه می‌شوند.
+ */
+function wrapSummary(summary: string, maxChars: number, maxLines: number): string {
+    const words = summary.split(/\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let current = "";
+
+    for (const word of words) {
+        const candidate = current ? `${current} ${word}` : word;
+
+        if (candidate.length > maxChars) {
+            if (current) lines.push(current);
+            current = word.length > maxChars ? word.slice(0, maxChars) : word;
+        } else {
+            current = candidate;
+        }
+
+        if (lines.length === maxLines) break;
+    }
+
+    if (lines.length < maxLines && current) lines.push(current);
+
+    const truncated = words.join(" ").length > lines.join(" ").length;
+    const lastLine = lines[lines.length - 1];
+    if (truncated && lastLine) {
+        lines[lines.length - 1] = lastLine.slice(0, maxChars - 1) + "…";
+    }
+
+    return lines.join("\n");
+}
+
 export function formatIssueCardMinimal(issue: JiraIssue, jiraBaseUrl: string): string {
     const status = issue.fields.status?.name;
     const jiraUrl = `${jiraBaseUrl}/browse/${issue.key}`;
+    const summary = wrapSummary(issue.fields.summary, CARD_WIDTH_CHARS, CARD_MAX_SUMMARY_LINES);
 
     return [
-        `🎫 ${escapeHtml(issue.key)}`,
-        "",
-        escapeHtml(issue.fields.summary),
+        `🎫 <b>${escapeHtml(issue.key)}</b>`,
+        CARD_SEPARATOR,
+        escapeHtml(summary),
         "",
         `<a href="${jiraUrl}">🔗 View in Jira</a>`,
         `${getStatusEmoji(status)} ${escapeHtml(status ?? "Unknown")}`,
@@ -219,10 +272,5 @@ export function formatIssueList(
     page: number,
     totalPages: number,
 ): string {
-    return [
-        "📋 تسک‌های من",
-        "",
-        `تعداد کل: ${total}`,
-        `صفحه ${page} از ${totalPages}`,
-    ].join("\n");
+    return `📊 تعداد کل: ${total}  •  📄 صفحه ${page} از ${totalPages}`;
 }

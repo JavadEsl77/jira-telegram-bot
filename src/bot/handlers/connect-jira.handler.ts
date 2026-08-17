@@ -9,7 +9,9 @@ import type { JiraClientFactory } from "../../jira/jira.client.factory.js";
 import { mainKeyboard } from "../keyboards/main.keyboard.js";
 import { retryConnectJiraKeyboard } from "../keyboards/connect-jira.keyboard.js";
 import { worklogDateKeyboard, worklogPreviewKeyboard } from "../keyboards/worklog.keyboard.js";
+import { settingsKeyboard } from "../keyboards/settings.keyboard.js";
 import { parseDuration, formatDuration, looksLikeDuration } from "../utils/duration-parser.js";
+import { TASK_PAGE_SIZE_MIN, TASK_PAGE_SIZE_MAX } from "../../user/user.service.js";
 
 
 /**
@@ -120,6 +122,36 @@ export function registerConnectJiraHandler(
                     { reply_markup: retryConnectJiraKeyboard() },
                 );
             }
+        }
+
+        if (state.step === "waiting_for_page_size") {
+            const trimmed = text.trim();
+            const value = Number(trimmed);
+
+            if (
+                !Number.isInteger(value) ||
+                value < TASK_PAGE_SIZE_MIN ||
+                value > TASK_PAGE_SIZE_MAX
+            ) {
+                await ctx.reply(
+                    `❌ عدد واردشده معتبر نیست.\n\nیک عدد صحیح بین ${TASK_PAGE_SIZE_MIN} تا ${TASK_PAGE_SIZE_MAX} ارسال کن.`,
+                );
+                return;
+            }
+
+            stateManager.clearState(userId);
+
+            await userService.setTaskPageSize(userId, value);
+
+            await ctx.reply(
+                [
+                    "✅ تعداد تسک در هر صفحه به‌روزرسانی شد.",
+                    "",
+                    `📄 مقدار جدید: ${value}`,
+                ].join("\n"),
+                { reply_markup: settingsKeyboard() },
+            );
+            return;
         }
 
         if (state.step === "waiting_for_comment") {

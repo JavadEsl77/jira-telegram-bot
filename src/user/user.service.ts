@@ -1,6 +1,13 @@
 import type { JiraCredentials, User } from "./user.types.js";
 import type { UserRepository } from "./user.repository.js";
 
+/** مقدار پیش‌فرض تعداد تسک در هر صفحه */
+export const DEFAULT_TASK_PAGE_SIZE = 5;
+/** کمترین تعداد تسک مجاز در هر صفحه */
+export const TASK_PAGE_SIZE_MIN = 1;
+/** بیشترین تعداد تسک مجاز در هر صفحه */
+export const TASK_PAGE_SIZE_MAX = 10;
+
 /**
  * سرویس مدیریت کاربران و binding میان Telegram و Jira.
  * این کلاس منطق تجاری مربوط به کاربران را کپسوله می‌کند
@@ -28,7 +35,12 @@ export class UserService {
         if (existing) return existing;
 
         const now = new Date();
-        const user: User = { telegramId, createdAt: now, updatedAt: now };
+        const user: User = {
+            telegramId,
+            taskPageSize: DEFAULT_TASK_PAGE_SIZE,
+            createdAt: now,
+            updatedAt: now,
+        };
         await this.repo.save(user);
         return user;
     }
@@ -64,9 +76,33 @@ export class UserService {
         const user = await this.getOrCreate(telegramId);
         await this.repo.save({
             telegramId: user.telegramId,
+            taskPageSize: user.taskPageSize,
             createdAt: user.createdAt,
             updatedAt: new Date(),
         });
+    }
+
+    /**
+     * تعداد تسک نمایش‌داده‌شده در هر صفحه را برای کاربر تنظیم می‌کند.
+     * @param telegramId - شناسه کاربر در Telegram
+     * @param pageSize - عددی بین {@link TASK_PAGE_SIZE_MIN} و {@link TASK_PAGE_SIZE_MAX}
+     */
+    async setTaskPageSize(telegramId: number, pageSize: number): Promise<void> {
+        const user = await this.getOrCreate(telegramId);
+        await this.repo.save({
+            ...user,
+            taskPageSize: pageSize,
+            updatedAt: new Date(),
+        });
+    }
+
+    /**
+     * تعداد تسک در هر صفحه را برای کاربر برمی‌گرداند (پیش‌فرض در صورت نبود رکورد).
+     * @param telegramId - شناسه کاربر در Telegram
+     */
+    async getTaskPageSize(telegramId: number): Promise<number> {
+        const user = await this.repo.findByTelegramId(telegramId);
+        return user?.taskPageSize ?? DEFAULT_TASK_PAGE_SIZE;
     }
 
     /**

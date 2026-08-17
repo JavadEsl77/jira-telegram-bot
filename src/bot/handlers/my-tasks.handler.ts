@@ -11,7 +11,8 @@ import { issueCardKeyboard, paginationKeyboard } from "../keyboards/issue.keyboa
 
 /**
  * لیست تسک‌ها را بارگذاری و نمایش می‌دهد.
- * پیام جاری (ctx.msg) به Header تبدیل می‌شود، سپس کارت‌ها و صفحه‌بندی ارسال می‌گردند.
+ * پیام جاری (ctx.msg) صرفاً وضعیت بارگذاری را نشان می‌دهد و در پایان حذف می‌شود؛
+ * Header و صفحه‌بندی هر دو در یک پیام واحد زیر لیست کارت‌ها ارسال می‌شوند.
  */
 async function showTaskList(
     ctx: Context,
@@ -36,7 +37,8 @@ async function showTaskList(
     try {
         const jiraClient = jiraClientFactory.createForUser(credentials);
         const issueService = new IssueService(jiraClient);
-        const result = await issueService.getMyTasks(page, 3);
+        const pageSize = await userService.getTaskPageSize(ctx.from!.id);
+        const result = await issueService.getMyTasks(page, pageSize);
 
         if (result.issues.length === 0) {
             await ctx.editMessageText(
@@ -47,11 +49,12 @@ async function showTaskList(
             return;
         }
 
-        // Edit the triggering message to the list header
-        const headerMessageId = ctx.msg!.message_id;
-        await ctx.editMessageText(
-            formatIssueList(result.total, result.page, result.totalPages),
-        );
+        // The loading message is no longer needed — header now shows below the list
+        try {
+            await ctx.api.deleteMessage(ctx.chat!.id, ctx.msg!.message_id);
+        } catch {
+            // Message may already be gone — ignore silently
+        }
 
         const chatId = ctx.chat!.id;
         const jiraBaseUrl = process.env.JIRA_BASE_URL ?? "";
@@ -73,16 +76,18 @@ async function showTaskList(
             }
         }
 
-        const paginationMsg = await ctx.api.sendMessage(
+        const footerMsg = await ctx.api.sendMessage(
             chatId,
-            `📄 صفحه ${result.page} از ${result.totalPages}`,
+            [
+                formatIssueList(result.total, result.page, result.totalPages),
+            ].join("\n"),
             { reply_markup: paginationKeyboard(result.page, result.totalPages) },
         );
 
         stateManager.setState(ctx.from!.id, {
             ...state,
             fromPage: undefined,
-            taskListAllMessageIds: [headerMessageId, ...cardMessageIds, paginationMsg.message_id],
+            taskListAllMessageIds: [...cardMessageIds, footerMsg.message_id],
         });
     } catch (error) {
         console.error("Failed to fetch my tasks", error);
@@ -110,7 +115,7 @@ export function registerMyTasksHandler(
 
         await ctx.answerCallbackQuery();
 
-        // Delete all previous list messages except the one being clicked (will become header)
+        // Delete all previous list messages except the one being clicked (reused for the loading text, then deleted in showTaskList)
         const state = stateManager.getState(ctx.from.id);
         const clickedMsgId = ctx.msg!.message_id;
         if (state.taskListAllMessageIds?.length) {

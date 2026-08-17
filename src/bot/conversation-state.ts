@@ -8,7 +8,8 @@ export type ConversationStep =
     | "waiting_for_worklog_duration"
     | "selecting_worklog_date"
     | "selecting_worklog_time"
-    | "confirm_worklog";
+    | "confirm_worklog"
+    | "waiting_for_page_size";
 
 interface ConversationState {
     step: ConversationStep;

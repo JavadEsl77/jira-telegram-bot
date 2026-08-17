@@ -6,5 +6,7 @@ export function settingsKeyboard() {
         .row()
         .text("❌ قطع اتصال Jira", "disconnect_jira")
         .row()
+        .text("📄 تعداد تسک در هر صفحه", "set_page_size")
+        .row()
         .text("◀️ بازگشت", "back_to_main");
 }

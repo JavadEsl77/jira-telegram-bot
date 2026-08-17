@@ -23,6 +23,8 @@ export interface User {
     telegramId: number;
     /** اطلاعات اتصال Jira — در صورت عدم اتصال، undefined است */
     jira?: JiraCredentials;
+    /** تعداد تسک نمایش‌داده‌شده در هر صفحه لیست «تسک‌های من» (بین ۱ تا ۱۰) */
+    taskPageSize: number;
     /** زمان ایجاد رکورد */
     createdAt: Date;
     /** آخرین زمان به‌روزرسانی */
