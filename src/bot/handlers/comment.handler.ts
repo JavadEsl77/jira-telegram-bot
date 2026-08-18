@@ -163,9 +163,17 @@ export function registerCommentHandler(
 
         try {
             const issue = await services.issueService.getIssue(issueKey ?? "");
+            const jiraBaseUrl = process.env.JIRA_BASE_URL ?? "";
+            const hasDescription = typeof issue.fields.description === "string"
+                && issue.fields.description.trim().length > 0;
 
             await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key, cancelState.fromPage),
+                reply_markup: issueDetailKeyboard(
+                    issue.key,
+                    `${jiraBaseUrl}/browse/${issue.key}`,
+                    hasDescription,
+                    cancelState.fromPage,
+                ),
             });
         } catch (error) {
             console.error(`Failed to fetch issue ${issueKey} on cancel`, error);

@@ -64,6 +64,12 @@ export interface JiraIssue {
             displayName: string;
         };
 
+        creator?: {
+            accountId?: string;
+            name?: string;
+            displayName: string;
+        };
+
         issuetype?: {
             id: string;
             name: string;
@@ -90,8 +96,30 @@ export interface JiraIssue {
         /** زمان ایجاد (ISO string) */
         created?: string;
 
-        description?: unknown;
+        /** توضیحات Issue — در Jira Server معمولاً متن ساده (wiki markup) است */
+        description?: string | null;
+
+        /** چند کامنت آخر Issue — به‌صورت پیش‌فرض همراه پاسخ GET issue برمی‌گردد (بدون pagination کامل) */
+        comment?: {
+            comments: JiraComment[];
+            total: number;
+        };
     };
+}
+
+/** یک کامنت روی Issue */
+export interface JiraComment {
+    id: string;
+    author?: {
+        name?: string;
+        displayName: string;
+    };
+    /** متن کامنت — در Jira Server معمولاً متن ساده (wiki markup) است */
+    body: string;
+    /** زمان ثبت کامنت (ISO string) */
+    created: string;
+    /** آخرین زمان ویرایش کامنت (ISO string) */
+    updated?: string;
 }
 
 /** نتیجه جستجوی Issue در Jira */

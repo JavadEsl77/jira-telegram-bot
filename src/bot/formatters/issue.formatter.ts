@@ -1,8 +1,36 @@
-import type { JiraIssue } from "../../jira/jira.types.js";
+import type { JiraComment, JiraIssue } from "../../jira/jira.types.js";
 import { gregorianToJalali, getPersianMonthName } from "../utils/calendar.js";
 
 function escapeHtml(text: string): string {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** متن را در صورت عبور از حد مشخص کوتاه می‌کند تا هرگز باعث شکست ارسال پیام تلگرام نشود */
+function truncateText(text: string, maxLength: number): string {
+    const trimmed = text.trim();
+    if (trimmed.length <= maxLength) return trimmed;
+    return `${trimmed.slice(0, maxLength).trimEnd()}…`;
+}
+
+/**
+ * توضیحات/کامنت Jira را که گاهی به‌صورت HTML (مثلاً از ویرایشگر Rich Text) برمی‌گردد،
+ * به متن ساده تبدیل می‌کند — تگ‌های خط‌جدید به newline و بقیه تگ‌ها حذف می‌شوند.
+ */
+function stripHtml(text: string): string {
+    return text
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n\n")
+        .replace(/<\/li>/gi, "\n")
+        .replace(/<li[^>]*>/gi, "• ")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&quot;/gi, "\"")
+        .replace(/&#39;/gi, "'")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
 }
 
 /** تاریخ میلادی را به فرمت عددی شمسی «YYYY/MM/DD» تبدیل می‌کند */
@@ -17,6 +45,12 @@ function formatJalaliPersian(date: Date): string {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const { jy, jm, jd } = gregorianToJalali(dateStr);
     return `${jd} ${getPersianMonthName(jm)} ${jy}`;
+}
+
+/** رشته تاریخ (بدون زمان، فرمت YYYY-MM-DD) مثل duedate را به شمسی عددی تبدیل می‌کند */
+function formatDateOnlyJalali(dateStr: string): string {
+    const { jy, jm, jd } = gregorianToJalali(dateStr);
+    return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
 }
 
 function formatRelativeDateEn(date?: string): string {
@@ -120,43 +154,79 @@ function getPriorityEmoji(priority?: string): string {
     }
 }
 
+/** حداکثر طول پیش‌نمایش توضیحات/آخرین کامنت در صفحه Summary تسک */
+const DETAIL_PREVIEW_MAX = 200;
+
 /**
- * یک Issue را به متن کامل برای نمایش در Telegram فرمت می‌کند.
- * شامل: کلید، عنوان، وضعیت، اولویت، مسئول، برچسب‌ها و زمان به‌روزرسانی.
+ * یک Issue را به متن کامل (Summary سطح اول) برای نمایش در Telegram فرمت می‌کند.
+ * شامل: کلید، عنوان، وضعیت، اولویت، نوع، افراد، برچسب‌ها، تاریخ‌ها، خلاصه توضیحات و آخرین کامنت.
+ * جزئیات طولانی (توضیحات کامل/همه کامنت‌ها) در صفحات جداگانه نمایش داده می‌شوند.
  * @param issue - Issue دریافت‌شده از Jira
  */
 export function formatIssue(issue: JiraIssue): string {
     const status = issue.fields.status?.name;
     const priority = issue.fields.priority?.name;
-    const assignee =
-        issue.fields.assignee?.displayName;
-
+    const assignee = issue.fields.assignee?.displayName;
+    const creator = issue.fields.creator?.displayName ?? issue.fields.reporter?.displayName;
+    const issueType = issue.fields.issuetype?.name;
     const labels = issue.fields.labels ?? [];
 
     const lines = [
-        `🎫 ${issue.key}`,
+        `🎫 شماره تسک: ${issue.key}`,
         "",
-        `📝 ${issue.fields.summary}`,
+        `📝 عنوان: ${issue.fields.summary}`,
         "",
-        `${getStatusEmoji(status)} وضعیت: ${status ?? "نامشخص"
-        }`,
-        `${getPriorityEmoji(priority)} اولویت: ${priority ?? "نامشخص"
-        }`,
+        `${getStatusEmoji(status)} وضعیت: ${status ?? "نامشخص"}`,
+        `${getPriorityEmoji(priority)} اولویت: ${priority ?? "نامشخص"}`,
     ];
+
+    if (issueType) {
+        lines.push(`📌 نوع: ${issueType}`);
+    }
+
+    lines.push("");
 
     if (assignee) {
         lines.push(`👤 مسئول: ${assignee}`);
     }
 
-    if (labels.length > 0) {
-        lines.push(`🏷 ${labels.join(", ")}`);
+    if (creator) {
+        lines.push(`👤 ایجادکننده: ${creator}`);
     }
 
-    lines.push(
-        `🕐 بروزرسانی: ${formatRelativeDate(
-            issue.fields.updated,
-        )}`,
-    );
+    if (labels.length > 0) {
+        lines.push("", `🏷 برچسب‌ها: ${labels.join(", ")}`);
+    }
+
+    lines.push("");
+
+    if (issue.fields.created) {
+        lines.push(`📅 ایجاد شده: ${formatJalaliPersian(new Date(issue.fields.created))}`);
+    }
+
+    lines.push(`🕐 بروزرسانی: ${formatRelativeDate(issue.fields.updated)}`);
+
+    if (issue.fields.duedate) {
+        lines.push(`📅 سررسید: ${formatDateOnlyJalali(issue.fields.duedate)}`);
+    }
+
+    const description =
+        typeof issue.fields.description === "string" ? stripHtml(issue.fields.description) : "";
+
+    if (description) {
+        lines.push("", "📝 توضیحات:", truncateText(description, DETAIL_PREVIEW_MAX));
+    }
+
+    const lastComment = issue.fields.comment?.comments.at(-1);
+
+    if (lastComment) {
+        lines.push(
+            "",
+            "💬 آخرین کامنت:",
+            `👤 نویسنده: ${lastComment.author?.displayName ?? "ناشناس"}`,
+            truncateText(stripHtml(lastComment.body), DETAIL_PREVIEW_MAX),
+        );
+    }
 
     return lines.join("\n");
 }
@@ -273,4 +343,62 @@ export function formatIssueList(
     totalPages: number,
 ): string {
     return `📊 تعداد کل: ${total}  •  📄 صفحه ${page} از ${totalPages}`;
+}
+
+/** حداکثر طول توضیحات در صفحه اختصاصی «توضیحات کامل» — امن برای محدودیت ۴۰۹۶ کاراکتری تلگرام */
+const DESCRIPTION_FULL_MAX = 3500;
+
+/**
+ * صفحه اختصاصی «توضیحات کامل» یک Issue را فرمت می‌کند.
+ * برای جلوگیری از شکست ارسال پیام، متن طولانی truncate می‌شود.
+ * @param issue - Issue دریافت‌شده از Jira
+ */
+export function formatIssueDescription(issue: JiraIssue): string {
+    const description =
+        typeof issue.fields.description === "string" ? stripHtml(issue.fields.description) : "";
+
+    return [
+        `📝 توضیحات ${issue.key}`,
+        "",
+        description ? truncateText(description, DESCRIPTION_FULL_MAX) : "بدون توضیحات.",
+    ].join("\n");
+}
+
+/** حداکثر طول هر کامنت در صفحه «همه کامنت‌ها» — امن برای محدودیت ۴۰۹۶ کاراکتری تلگرام */
+const COMMENT_BODY_MAX = 500;
+
+/**
+ * صفحه اختصاصی «همه کامنت‌ها»ی یک Issue را فرمت می‌کند (صفحه‌بندی‌شده).
+ * @param issueKey - کلید Issue
+ * @param comments - کامنت‌های همین صفحه (جدیدترین اول)
+ * @param page - شماره صفحه جاری
+ * @param totalPages - تعداد کل صفحات
+ * @param total - تعداد کل کامنت‌ها
+ */
+export function formatIssueComments(
+    issueKey: string,
+    comments: JiraComment[],
+    page: number,
+    totalPages: number,
+    total: number,
+): string {
+    if (total === 0) {
+        return [`💬 کامنت‌های ${issueKey}`, "", "هیچ کامنتی برای این تسک ثبت نشده است."].join("\n");
+    }
+
+    const commentBlocks = comments.map((comment) =>
+        [
+            `👤 نویسنده: ${comment.author?.displayName ?? "ناشناس"}`,
+            `🕐 تاریخ: ${formatRelativeDate(comment.created)}`,
+            "",
+            truncateText(stripHtml(comment.body), COMMENT_BODY_MAX),
+        ].join("\n"),
+    );
+
+    return [
+        `💬 کامنت‌های ${issueKey}`,
+        `📊 تعداد کل: ${total}  •  📄 صفحه ${page} از ${totalPages}`,
+        "",
+        commentBlocks.join("\n\n────────────\n\n"),
+    ].join("\n");
 }

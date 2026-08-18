@@ -114,6 +114,29 @@ export class JiraClient {
     }
 
     /**
+     * کامنت‌های یک Issue را صفحه‌بندی‌شده و به‌ترتیب جدیدترین اول برمی‌گرداند.
+     * برخلاف `comment` embedded در پاسخ GET issue، این endpoint pagination واقعی دارد.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     * @param options - تنظیمات pagination
+     */
+    async getComments(
+        issueKey: string,
+        options?: {
+            startAt?: number;
+            maxResults?: number;
+        },
+    ) {
+        const response = await this.client.get(`/issue/${issueKey}/comment`, {
+            params: {
+                startAt: options?.startAt ?? 0,
+                maxResults: options?.maxResults ?? 20,
+                orderBy: "-created",
+            },
+        });
+        return response.data;
+    }
+
+    /**
      * یک Worklog به Issue اضافه می‌کند.
      * @param issueKey - کلید Issue (مثلاً PROJ-123)
      * @param data - اطلاعات Worklog
