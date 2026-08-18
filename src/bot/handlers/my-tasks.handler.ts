@@ -45,7 +45,11 @@ async function showTaskList(
                 ["📋 تسک‌های من", "", "تسکی برای نمایش پیدا نشد."].join("\n"),
                 { reply_markup: new InlineKeyboard().text("🏠 منوی اصلی", "back_to_main") },
             );
-            stateManager.setState(ctx.from!.id, { step: "idle", taskListAllMessageIds: [] });
+            stateManager.setState(ctx.from!.id, {
+                step: "idle",
+                taskListAllMessageIds: [],
+                searchQuery: undefined,
+            });
             return;
         }
 
@@ -87,6 +91,7 @@ async function showTaskList(
         stateManager.setState(ctx.from!.id, {
             ...state,
             fromPage: undefined,
+            searchQuery: undefined,
             taskListAllMessageIds: [...cardMessageIds, footerMsg.message_id],
         });
     } catch (error) {

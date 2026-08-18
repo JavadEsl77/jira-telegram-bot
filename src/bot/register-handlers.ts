@@ -8,6 +8,7 @@ import { registerConnectJiraHandler } from "./handlers/connect-jira.handler.js";
 import { registerStartHandler } from "./handlers/start.handler.js";
 import { registerSettingsHandler } from "./handlers/settings.handler.js";
 import { registerMyTasksHandler } from "./handlers/my-tasks.handler.js";
+import { registerSearchIssuesHandler } from "./handlers/search-issues.handler.js";
 import { registerIssueDetailHandler } from "./handlers/issue-detail.handler.js";
 import { registerTransitionHandler } from "./handlers/transition.handler.js";
 import { registerCommentHandler } from "./handlers/comment.handler.js";
@@ -38,6 +39,7 @@ export function registerHandlers(
     registerStartHandler(bot, userService);
     registerSettingsHandler(bot, userService, stateManager);
     registerMyTasksHandler(bot, userService, jiraClientFactory, stateManager);
+    registerSearchIssuesHandler(bot, userService, jiraClientFactory, stateManager);
     registerIssueDetailHandler(bot, userService, jiraClientFactory, stateManager);
     registerTransitionHandler(bot, userService, jiraClientFactory, stateManager);
     registerCommentHandler(bot, userService, jiraClientFactory, stateManager);

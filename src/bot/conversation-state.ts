@@ -9,7 +9,8 @@ export type ConversationStep =
     | "selecting_worklog_date"
     | "selecting_worklog_time"
     | "confirm_worklog"
-    | "waiting_for_page_size";
+    | "waiting_for_page_size"
+    | "waiting_for_search_query";
 
 interface ConversationState {
     step: ConversationStep;
@@ -36,6 +37,8 @@ interface ConversationState {
     taskListAllMessageIds?: number[];
     /** شماره صفحه‌ای که کاربر از آن وارد Issue Detail شده — برای بازگشت به همان صفحه */
     fromPage?: number;
+    /** عبارت جستجوی جاری — برای Pagination و بازگشت از Issue Detail به نتایج جستجو */
+    searchQuery?: string;
 }
 
 /**

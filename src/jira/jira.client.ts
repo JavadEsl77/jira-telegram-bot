@@ -43,6 +43,15 @@ export class JiraClient {
     }
 
     /**
+     * لیست پروژه‌هایی که کاربر جاری به آن‌ها دسترسی دارد را برمی‌گرداند.
+     * برای جستجوی Issue Key‌های عددی (بدون پیشوند پروژه) در همه پروژه‌ها استفاده می‌شود.
+     */
+    async getProjects(): Promise<{ key: string }[]> {
+        const response = await this.client.get("/project");
+        return response.data;
+    }
+
+    /**
      * Issue‌ها را با یک JQL query جستجو می‌کند.
      * @param jql - عبارت JQL (Jira Query Language)
      * @param options - تنظیمات pagination

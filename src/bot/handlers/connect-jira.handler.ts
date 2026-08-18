@@ -12,6 +12,10 @@ import { worklogDateKeyboard, worklogPreviewKeyboard } from "../keyboards/worklo
 import { settingsKeyboard } from "../keyboards/settings.keyboard.js";
 import { parseDuration, formatDuration, looksLikeDuration } from "../utils/duration-parser.js";
 import { TASK_PAGE_SIZE_MIN, TASK_PAGE_SIZE_MAX } from "../../user/user.service.js";
+import { startSearchFromText } from "./search-issues.handler.js";
+
+/** حداکثر طول مجاز عبارت جستجو */
+const SEARCH_QUERY_MAX_LENGTH = 100;
 
 
 /**
@@ -151,6 +155,27 @@ export function registerConnectJiraHandler(
                 ].join("\n"),
                 { reply_markup: settingsKeyboard() },
             );
+            return;
+        }
+
+        if (state.step === "waiting_for_search_query") {
+            const trimmed = text.trim();
+
+            if (!trimmed) {
+                await ctx.reply("🔎 عبارت جستجو نمی‌تواند خالی باشد.");
+                return;
+            }
+
+            if (trimmed.length > SEARCH_QUERY_MAX_LENGTH) {
+                await ctx.reply(
+                    ["❌ عبارت جستجو معتبر نیست.", "", "لطفاً عبارت دیگری وارد کنید."].join("\n"),
+                );
+                return;
+            }
+
+            stateManager.clearState(userId);
+
+            await startSearchFromText(ctx, trimmed, userService, jiraClientFactory, stateManager);
             return;
         }
 

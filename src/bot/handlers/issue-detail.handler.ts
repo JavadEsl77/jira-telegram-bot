@@ -60,8 +60,13 @@ export function registerIssueDetailHandler(
                 fromPage,
             });
 
+            // Route "back" to search results if the list we came from was a search, otherwise My Tasks
+            const backCallback = state.searchQuery
+                ? `search_back_to_list:${fromPage}`
+                : `back_to_list:${fromPage}`;
+
             await ctx.editMessageText(formatIssue(issue), {
-                reply_markup: issueDetailKeyboard(issue.key, fromPage),
+                reply_markup: issueDetailKeyboard(issue.key, fromPage, backCallback),
             });
         } catch (error) {
             console.error(`Failed to fetch issue ${issueKey}`, error);

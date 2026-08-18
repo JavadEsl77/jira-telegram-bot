@@ -30,7 +30,7 @@ export function registerSettingsHandler(
     bot.callbackQuery("back_to_main", async (ctx) => {
         await ctx.answerCallbackQuery();
 
-        // Clean up any leftover task list cards (except the clicked message) before showing the menu
+        // Clean up any leftover task/search list cards (except the clicked message) before showing the menu
         const state = stateManager.getState(ctx.from.id);
         const clickedMsgId = ctx.msg!.message_id;
         if (state.taskListAllMessageIds?.length) {
@@ -42,8 +42,14 @@ export function registerSettingsHandler(
                     // Message may be too old or already deleted — ignore silently
                 }
             }
-            stateManager.setState(ctx.from.id, { ...state, taskListAllMessageIds: undefined });
         }
+        stateManager.setState(ctx.from.id, {
+            ...state,
+            step: "idle",
+            taskListAllMessageIds: undefined,
+            searchQuery: undefined,
+            fromPage: undefined,
+        });
 
         await ctx.editMessageText(
             ["👋 سلام!", "", "از منوی زیر انتخاب کن:"].join("\n"),
