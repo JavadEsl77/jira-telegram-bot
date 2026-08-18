@@ -102,6 +102,7 @@ export function registerCommentHandler(
                 "⏳ در حال ارسال کامنت...",
             ].join("\n"),
         );
+        await ctx.replyWithChatAction("typing");
 
         const services = await getServicesForUser(ctx.from.id);
 
@@ -150,6 +151,8 @@ export function registerCommentHandler(
 
         const cancelState = stateManager.getState(ctx.from.id);
         stateManager.clearState(ctx.from.id);
+
+        await ctx.replyWithChatAction("typing");
 
         const services = await getServicesForUser(ctx.from.id);
 

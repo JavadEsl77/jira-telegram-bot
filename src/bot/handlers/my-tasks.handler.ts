@@ -26,6 +26,7 @@ async function showTaskList(
     await ctx.editMessageText(
         ["📋 تسک‌های من", "", "⏳ در حال دریافت تسک‌های شما..."].join("\n"),
     );
+    await ctx.replyWithChatAction("typing");
 
     const credentials = await userService.getJiraCredentials(ctx.from!.id);
 

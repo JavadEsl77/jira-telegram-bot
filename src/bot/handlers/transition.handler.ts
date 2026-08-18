@@ -35,6 +35,7 @@ export function registerTransitionHandler(
         const issueKey = ctx.match[1];
 
         await ctx.answerCallbackQuery();
+        await ctx.replyWithChatAction("typing");
 
         const services = await getServicesForUser(ctx.from.id);
 
@@ -114,6 +115,7 @@ export function registerTransitionHandler(
         await ctx.editMessageText(
             [`🎫 ${issueKey}`, "", "⏳ در حال تغییر وضعیت..."].join("\n"),
         );
+        await ctx.replyWithChatAction("typing");
 
         const services = await getServicesForUser(ctx.from.id);
 

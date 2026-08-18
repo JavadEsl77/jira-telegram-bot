@@ -134,6 +134,7 @@ export async function showSearchResults(
     await ctx.editMessageText(
         [SEARCH_HEADER, "", "⏳ در حال جستجوی تسک‌ها..."].join("\n"),
     );
+    await ctx.replyWithChatAction("typing");
 
     await deliverSearchResults(
         ctx,
@@ -161,6 +162,7 @@ export async function startSearchFromText(
     const loadingMsg = await ctx.reply(
         [SEARCH_HEADER, "", "⏳ در حال جستجوی تسک‌ها..."].join("\n"),
     );
+    await ctx.replyWithChatAction("typing");
 
     await deliverSearchResults(
         ctx,
@@ -214,7 +216,7 @@ export function registerSearchIssuesHandler(
             isSearchAgain
                 ? "🔎 عبارت جدید را وارد کنید:"
                 : ["🔎 جستجوی تسک", "", "عبارت موردنظر خود را وارد کنید:"].join("\n"),
-            { reply_markup: new InlineKeyboard() },
+            { reply_markup: new InlineKeyboard().text("◀️ بازگشت", "back_to_main") },
         );
     });
 

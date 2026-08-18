@@ -230,6 +230,7 @@ export function registerWorklogHandler(
             ].join("\n"),
             { reply_markup: emptyKeyboard() },
         );
+        await ctx.replyWithChatAction("typing");
 
         const credentials = await userService.getJiraCredentials(ctx.from.id);
         if (!credentials) {
@@ -382,6 +383,8 @@ export function registerWorklogHandler(
             await ctx.editMessageText("❌ ابتدا حساب Jira خود را متصل کنید.");
             return;
         }
+
+        await ctx.replyWithChatAction("typing");
 
         try {
             const jiraClient = jiraClientFactory.createForUser(credentials);

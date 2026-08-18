@@ -28,6 +28,7 @@ export function registerIssueDetailHandler(
         const fromPage = ctx.match[2] ? Number(ctx.match[2]) : (state.fromPage ?? 1);
 
         await ctx.answerCallbackQuery();
+        await ctx.replyWithChatAction("typing");
 
         // Delete all list messages except the clicked card (which becomes the detail view)
         const currentMsgId = ctx.msg!.message_id;

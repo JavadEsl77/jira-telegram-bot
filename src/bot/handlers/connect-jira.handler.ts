@@ -90,6 +90,7 @@ export function registerConnectJiraHandler(
             stateManager.clearState(userId);
 
             await ctx.reply("⏳ در حال بررسی Token...");
+            await ctx.replyWithChatAction("typing");
 
             try {
                 const jiraClient = jiraClientFactory.createForUser({ token });
