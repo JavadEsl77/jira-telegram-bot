@@ -58,6 +58,28 @@ export class JiraClient {
     }
 
     /**
+     * مجوزهای کاربر جاری را برمی‌گرداند.
+     * بدون `issueKey`/`projectKey`، Jira مجوزهای سطح Project/Issue را «در صورت داشتن در حداقل
+     * یک پروژه» گزارش می‌کند — این برای مجوزهای مشروط (مثل «فقط Reporter می‌تواند حذف کند»)
+     * می‌تواند نادرست باشد. برای نتیجه دقیق، `issueKey` همان Issue موردنظر را بدهید.
+     * @param permissionKeys - کلیدهای مجوز موردنظر (مثلاً `["DELETE_ISSUE"]`)؛ در صورت خالی بودن همه مجوزها برمی‌گردند
+     * @param context - محدودکردن بررسی به یک Issue یا Project خاص برای نتیجه دقیق
+     */
+    async getMyPermissions(
+        permissionKeys?: string[],
+        context?: { issueKey?: string; projectKey?: string },
+    ): Promise<Record<string, { havePermission: boolean }>> {
+        const response = await this.client.get("/mypermissions", {
+            params: {
+                ...(permissionKeys?.length ? { permissions: permissionKeys.join(",") } : {}),
+                ...(context?.issueKey ? { issueKey: context.issueKey } : {}),
+                ...(context?.projectKey ? { projectKey: context.projectKey } : {}),
+            },
+        });
+        return response.data.permissions ?? {};
+    }
+
+    /**
      * کاربران قابل Assign به یک پروژه را برمی‌گرداند (بدون اطلاعات pagination از سمت Jira).
      * @param projectKey - کلید پروژه
      * @param options - تنظیمات pagination
@@ -184,5 +206,16 @@ export class JiraClient {
         started: string;
     }) {
         await this.client.post(`/issue/${issueKey}/worklog`, data);
+    }
+
+    /**
+     * یک Issue را حذف می‌کند. اگر Issue دارای Sub-task باشد، آن‌ها هم حذف می‌شوند
+     * (`deleteSubtasks=true`) تا حذف Task‌های دارای Sub-task با خطا مواجه نشود.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     */
+    async deleteIssue(issueKey: string): Promise<void> {
+        await this.client.delete(`/issue/${issueKey}`, {
+            params: { deleteSubtasks: true },
+        });
     }
 }

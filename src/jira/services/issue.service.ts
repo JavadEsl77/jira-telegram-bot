@@ -65,4 +65,12 @@ export class IssueService {
     async getIssue(issueKey: string): Promise<JiraIssue> {
         return this.jira.getIssue(issueKey);
     }
+
+    /**
+     * یک Issue (Task یا Sub-task) را حذف می‌کند.
+     * @param issueKey - کلید Issue (مثلاً PROJ-123)
+     */
+    async deleteIssue(issueKey: string): Promise<void> {
+        return this.jira.deleteIssue(issueKey);
+    }
 }

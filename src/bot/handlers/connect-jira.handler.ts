@@ -19,6 +19,7 @@ import {
     handleCreateIssueLabelsText,
     handleCreateIssueSummaryText,
 } from "./create-issue.handler.js";
+import { handleDeleteIssueKeyText } from "./delete-issue.handler.js";
 
 /** حداکثر طول مجاز عبارت جستجو */
 const SEARCH_QUERY_MAX_LENGTH = 100;
@@ -203,6 +204,11 @@ export function registerConnectJiraHandler(
 
         if (state.step === "create_issue_labels") {
             await handleCreateIssueLabelsText(ctx, userId, text, userService, stateManager);
+            return;
+        }
+
+        if (state.step === "waiting_for_delete_issue_key") {
+            await handleDeleteIssueKeyText(ctx, userId, text, userService, jiraClientFactory, stateManager);
             return;
         }
 

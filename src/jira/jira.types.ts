@@ -73,6 +73,8 @@ export interface JiraIssue {
         issuetype?: {
             id: string;
             name: string;
+            /** true اگر این نوع Issue یک Sub-task باشد */
+            subtask?: boolean;
         };
 
         labels?: string[];

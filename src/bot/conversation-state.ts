@@ -19,7 +19,8 @@ export type ConversationStep =
     | "create_issue_estimate"
     | "create_issue_estimate_custom"
     | "create_issue_labels"
-    | "create_issue_preview";
+    | "create_issue_preview"
+    | "waiting_for_delete_issue_key";
 
 interface ConversationState {
     step: ConversationStep;
@@ -77,6 +78,12 @@ interface ConversationState {
     createIssueOptionsCache?: { id: string; name: string }[];
     /** کش موقت کاربران قابل Assign نمایش‌داده‌شده — برای lookup displayName از روی username در انتخاب کاربر */
     createIssueAssigneeOptions?: { name: string; displayName: string }[];
+
+    // --- جریان حذف تسک (Delete Issue) ---
+    /** کلید Issue انتخاب‌شده برای حذف — بعد از نمایش خلاصه، تا تأیید/لغو نگه داشته می‌شود */
+    deleteIssueKey?: string;
+    /** آیا Issue انتخاب‌شده Sub-task است (برای پیام موفقیت مناسب) */
+    deleteIssueIsSubtask?: boolean;
 }
 
 /**

@@ -8,5 +8,7 @@ export function mainKeyboard() {
         .row()
         .text("➕ ایجاد تسک", "create_issue")
         .row()
+        .text("🗑 حذف تسک", "delete_issue")
+        .row()
         .text("⚙️ تنظیمات", "settings");
 }
