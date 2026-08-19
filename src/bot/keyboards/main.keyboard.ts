@@ -6,5 +6,7 @@ export function mainKeyboard() {
         .row()
         .text("🔍 جستجوی تسک", "search_tasks")
         .row()
+        .text("➕ ایجاد تسک", "create_issue")
+        .row()
         .text("⚙️ تنظیمات", "settings");
 }

@@ -46,8 +46,46 @@ export class JiraClient {
      * لیست پروژه‌هایی که کاربر جاری به آن‌ها دسترسی دارد را برمی‌گرداند.
      * برای جستجوی Issue Key‌های عددی (بدون پیشوند پروژه) در همه پروژه‌ها استفاده می‌شود.
      */
-    async getProjects(): Promise<{ key: string }[]> {
+    async getProjects(): Promise<{ id: string; key: string; name: string }[]> {
         const response = await this.client.get("/project");
+        return response.data;
+    }
+
+    /** لیست کامل Priorityهای تعریف‌شده در Jira را برمی‌گرداند. */
+    async getPriorities() {
+        const response = await this.client.get("/priority");
+        return response.data;
+    }
+
+    /**
+     * کاربران قابل Assign به یک پروژه را برمی‌گرداند (بدون اطلاعات pagination از سمت Jira).
+     * @param projectKey - کلید پروژه
+     * @param options - تنظیمات pagination
+     */
+    async getAssignableUsers(
+        projectKey: string,
+        options?: {
+            startAt?: number;
+            maxResults?: number;
+        },
+    ) {
+        const response = await this.client.get("/user/assignable/search", {
+            params: {
+                project: projectKey,
+                startAt: options?.startAt ?? 0,
+                maxResults: options?.maxResults ?? 20,
+            },
+        });
+        return response.data;
+    }
+
+    /**
+     * یک Issue جدید در Jira ایجاد می‌کند.
+     * @param payload - آبجکت `{ fields }` طبق فرمت Jira REST API v2
+     * @returns آبجکت شامل `key` واقعی Issue ایجادشده
+     */
+    async createIssue(payload: { fields: Record<string, unknown> }): Promise<{ id: string; key: string }> {
+        const response = await this.client.post("/issue", payload);
         return response.data;
     }
 

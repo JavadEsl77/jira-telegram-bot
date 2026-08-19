@@ -115,3 +115,43 @@ export function looksLikeDuration(input: string): boolean {
     if (!trimmed) return false;
     return /^\d/.test(trimmed) && /[hmsd]/.test(trimmed);
 }
+
+/** حداکثر مقدار مجاز برای Original Estimate — ۶۰ روز، فقط یک سقف منطقی برای جلوگیری از ورودی نامعقول */
+const MAX_ESTIMATE_MINUTES = 60 * 24 * 60;
+
+/**
+ * ورودی Original Estimate را پارس و به فرمت «pretty duration» موردقبول Jira
+ * (مثلاً "1d 2h", "2h", "30m") نرمالایز می‌کند. برخلاف {@link parseDuration}
+ * سقف ۲۴ ساعته ندارد، چون Original Estimate می‌تواند چند روزه باشد.
+ * @param input - رشته ورودی (مثلاً "1h 30m"، "3h"، "2d")
+ * @returns رشته نرمالایزشده در صورت موفقیت، null در صورت خطا
+ */
+export function parseEstimate(input: string): string | null {
+    const trimmed = input.trim().toLowerCase();
+    if (!trimmed) return null;
+
+    const tokens = tokenize(trimmed);
+    if (!tokens) return null;
+
+    let totalMinutes = 0;
+
+    for (const token of tokens) {
+        if (token.unit === "d") totalMinutes += token.value * 24 * 60;
+        else if (token.unit === "h") totalMinutes += token.value * 60;
+        else if (token.unit === "m") totalMinutes += token.value;
+    }
+
+    if (totalMinutes <= 0) return null;
+    if (totalMinutes > MAX_ESTIMATE_MINUTES) return null;
+
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+
+    return parts.join(" ");
+}

@@ -122,6 +122,18 @@ export interface JiraComment {
     updated?: string;
 }
 
+/** یک گزینه ساده id/name — برای Priority در فرم ایجاد تسک */
+export interface JiraIdNameOption {
+    id: string;
+    name: string;
+}
+
+/** کاربر قابل Assign — طبق Jira Server با username (`name`) شناسایی می‌شود، نه accountId */
+export interface JiraAssignableUser {
+    name: string;
+    displayName: string;
+}
+
 /** نتیجه جستجوی Issue در Jira */
 export interface JiraSearchResult {
     issues: JiraIssue[];

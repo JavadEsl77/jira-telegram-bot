@@ -132,7 +132,7 @@ function getStatusEmoji(status?: string): string {
 }
 
 /** ایموجی متناسب با اولویت Issue را برمی‌گرداند */
-function getPriorityEmoji(priority?: string): string {
+export function getPriorityEmoji(priority?: string): string {
     switch (priority?.toLowerCase()) {
         case "highest":
             return "🔴";

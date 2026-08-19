@@ -13,6 +13,12 @@ import { settingsKeyboard } from "../keyboards/settings.keyboard.js";
 import { parseDuration, formatDuration, looksLikeDuration } from "../utils/duration-parser.js";
 import { TASK_PAGE_SIZE_MIN, TASK_PAGE_SIZE_MAX } from "../../user/user.service.js";
 import { startSearchFromText } from "./search-issues.handler.js";
+import {
+    handleCreateIssueDescriptionText,
+    handleCreateIssueEstimateCustomText,
+    handleCreateIssueLabelsText,
+    handleCreateIssueSummaryText,
+} from "./create-issue.handler.js";
 
 /** حداکثر طول مجاز عبارت جستجو */
 const SEARCH_QUERY_MAX_LENGTH = 100;
@@ -177,6 +183,26 @@ export function registerConnectJiraHandler(
             stateManager.clearState(userId);
 
             await startSearchFromText(ctx, trimmed, userService, jiraClientFactory, stateManager);
+            return;
+        }
+
+        if (state.step === "create_issue_summary") {
+            await handleCreateIssueSummaryText(ctx, userId, text, userService, stateManager);
+            return;
+        }
+
+        if (state.step === "create_issue_description") {
+            await handleCreateIssueDescriptionText(ctx, userId, text, userService, jiraClientFactory, stateManager);
+            return;
+        }
+
+        if (state.step === "create_issue_estimate_custom") {
+            await handleCreateIssueEstimateCustomText(ctx, userId, text, userService, stateManager);
+            return;
+        }
+
+        if (state.step === "create_issue_labels") {
+            await handleCreateIssueLabelsText(ctx, userId, text, userService, stateManager);
             return;
         }
 
